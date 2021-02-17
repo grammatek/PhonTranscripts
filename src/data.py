@@ -23,3 +23,17 @@ class PhoneticData:
     def init_list_from_file(filename: str):
         with open(filename) as f:
             return f.read().splitlines()
+
+
+class DBPath:
+
+    def __init__(self, configfile='transcription.conf', working_dir=None):
+        if working_dir:
+            current_dir = working_dir
+        else:
+            current_dir = os.getcwd() + '/'
+
+        config = configparser.ConfigParser()
+        config.read(current_dir + configfile)
+        db = config['DB']
+        self.db_path = current_dir + db.get('db_path')

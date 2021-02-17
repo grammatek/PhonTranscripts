@@ -27,16 +27,16 @@ def init_ref_dict(dict_file, separator):
     pron_dict = []
     for line in dict_file:
         word, transcr, ref_str = line.split(separator)
-        entry = PronDictEntry(word, transcr, reference=ref_str)
+        entry = PronDictEntry(word, transcr, reference=ref_str.strip())
         pron_dict.append(entry)
     return pron_dict
 
 
 def create_tree_list(pron_dict):
-
+    tb = tree_builder.TreeBuilder()
     tree_list = []
     for entry in pron_dict:
-        t = tree_builder.build_compound_tree(entry)
+        t = tb.build_compound_tree(entry)
         tree_list.append(t)
     return tree_list
 
@@ -62,10 +62,15 @@ def main():
     tree_dict = create_tree_list(ref_dict)
     syllabified = syllabification.syllabify_tree_dict(tree_dict)
 
-    for entry in syllabified:
-        print(entry.syllable_format())
+    mismatches = []
+    with open('mismatches.csv', 'w') as f:
+        for entry in syllabified:
+            if entry.reference_transcr != entry.dot_format_syllables():
+                mismatches.append(entry.word + '\t' + entry.reference_transcr + '\t' + entry.dot_format_syllables())
+                f.write(entry.word + '\t' + entry.reference_transcr + '\t' + entry.dot_format_syllables() + '\n')
 
-    print(str(len(ref_dict)) + " type: " + test_type)
+    print(str(len(mismatches)))
+    print(str(len(mismatches)/len(ref_dict) * 100) + '%')
 
 
 if __name__ == '__main__':

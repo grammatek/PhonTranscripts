@@ -1,7 +1,7 @@
 
 """
 
-Perform syllabification on words transcribed with X-SAMPA.
+Perform syllabification on words transcribed with X-SAMPA, or whatever alphabet defined in transcription.conf.
 Syllable rules for Icelandic as described in:
     - Anton Karl Ingason (2006): Íslensk atkvæði - vélræn nálgun. (http://www.linguist.is/skjol/atkvadi.pdf)
     - Kristján Árnason (2005): Hljóð. Ritröðin Íslensk tunga.
@@ -31,18 +31,7 @@ Thus it is important to perform compound analysis before applying the core sylla
 """
 
 from . import syllable
-
-
-# each syllable has a vowel as a nucleus. 'e' and 'o' aren't actually in the inventory, but we need
-# to be able to identify 'ei' and 'ou' from the first character only. 'P' is the replacement for '9' in Ossian format.
-VOWELS = ['a', 'a:', 'O', 'O:', 'u', 'u:', '9', '9:', 'Y', 'Y:', 'E', 'E:', 'I', 'I:', 'i', 'i:',
-          'ai', 'ai:', 'au', 'au:', 'ou', 'ou:', '9Y', '9Y:', 'Oi', 'Yi', 'ei', 'ei:', 'e', 'o', 'P', 'P:', 'PY', 'PY:']
-
-# these consonant clusters should not be divided between two syllables
-# the general rule is: p, t, k, s, b, d, g, f + v, j, r. But not all of these combinations are
-# valid ('sr', 'pv', 'fv')
-CONS_CLUSTERS = ['s v', 's j', 'p j', 'p r', 't v', 't j', 't r', 'k v', 'k j', 'k r',
-                 'p_h j', 'p_h r', 't_h v', 't_h j', 't_h r', 'k_h v', 'k_h j', 'k_h r', 'f r', 'f j']
+from entry import PhonDict
 
 
 def syllabify_on_nucleus(transcription_arr):
@@ -53,11 +42,11 @@ def syllabify_on_nucleus(transcription_arr):
     syllables = []
     current_syllable = syllable.Syllable()
     for phone in transcription_arr:
-        if current_syllable.has_nucleus and phone in VOWELS:
+        if current_syllable.has_nucleus and phone in PhonDict.get_alphabet().vowels:
             syllables.append(current_syllable)
             current_syllable = syllable.Syllable()
 
-        if phone in VOWELS:
+        if phone in PhonDict.get_alphabet().vowels:
             current_syllable.has_nucleus = True
 
         current_syllable.append(phone)
@@ -68,7 +57,7 @@ def syllabify_on_nucleus(transcription_arr):
 
 def identify_clusters(entry):
     for syll in entry.syllables:
-        for clust in CONS_CLUSTERS:
+        for clust in PhonDict.get_alphabet().cons_clusters:
             if syll.content.strip().endswith(clust):
                 syll.cons_cluster = clust
 
@@ -89,13 +78,13 @@ def syllabify_final(entry):
         prev_syll = entry.syllables[ind - 1]
         # syllable after the first syllable starts with a vowel - look for consonant onset in previous syllable
         # and move the consonant / consonant cluster from the previous to the current syllable
-        if ind > 0 and syll.content[0] in VOWELS:
+        if ind > 0 and syll.content[0] in PhonDict.get_alphabet().vowels:
             if prev_syll.cons_cluster:
                 # copy cons_cluster to next syllable
                 syll.append_before(prev_syll.cons_cluster)
                 prev_syll.remove_cluster()
                 entry.update_syllables(ind, prev_syll, syll)
-            elif prev_syll.last_phones() not in VOWELS:
+            elif prev_syll.last_phones() not in PhonDict.get_alphabet().vowels:
                 # handle 'jE' (=é) as one vowel
                 if prev_syll.endswith('j') and syll.startswith('E'):
                     phone = prev_syll.last_phones(1)
