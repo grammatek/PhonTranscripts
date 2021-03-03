@@ -88,6 +88,20 @@ class PronDictEntry:
 
         return sylls.strip()
 
+    def stress_w_syllable_format(self):
+        sylls = ""
+        for syll in self.syllables:
+            stressed_phones = []
+            phones = syll.content.strip().split()
+            for p in phones:
+                if p in PhonDict.get_alphabet().vowels:
+                    p = p + str(syll.stress)
+                stressed_phones.append(p)
+
+            sylls += " ".join(stressed_phones) + ". "
+
+        return sylls.strip()[:-1]
+
     def simple_stress_format(self):
         return self.stress_format()
 

@@ -14,8 +14,10 @@ transcription.
 """
 
 import argparse
+from datetime import datetime
 import syllab_stress.tree_builder as tree_builder
 import syllab_stress.syllabification as syllabification
+import syllab_stress.stress as stress
 
 from entry import PronDictEntry
 
@@ -62,12 +64,19 @@ def main():
     tree_dict = create_tree_list(ref_dict)
     syllabified = syllabification.syllabify_tree_dict(tree_dict)
 
+    if test_type == 'stress':
+        syllabified = stress.set_stress(syllabified)
+
     mismatches = []
-    with open('mismatches.csv', 'w') as f:
+    with open(str(datetime.now().time()) + '_' + test_type + '_mismatches.csv', 'w') as f:
         for entry in syllabified:
-            if entry.reference_transcr != entry.dot_format_syllables():
-                mismatches.append(entry.word + '\t' + entry.reference_transcr + '\t' + entry.dot_format_syllables())
-                f.write(entry.word + '\t' + entry.reference_transcr + '\t' + entry.dot_format_syllables() + '\n')
+            if test_type == 'syllab':
+                hypothesis = entry.dot_format_syllables()
+            else:
+                hypothesis = entry.stress_format()
+            if entry.reference_transcr != hypothesis:
+                mismatches.append(entry.word + '\t' + entry.reference_transcr + '\t' + hypothesis)
+                f.write(entry.word + '\t' + entry.reference_transcr + '\t' + hypothesis + '\n')
 
     print(str(len(mismatches)))
     print(str(len(mismatches)/len(ref_dict) * 100) + '%')

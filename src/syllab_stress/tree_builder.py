@@ -1,5 +1,4 @@
 
-from . import comp_dict_db
 from .dict_db import DictDB
 import entry
 
